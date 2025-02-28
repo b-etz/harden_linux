@@ -463,9 +463,9 @@ main() {
     disable_filesystems
     secure_boot
     #disable_ipv6
-    setup_apparmor
     setup_ntp
     setup_aide
+    #setup_apparmor
     configure_sysctl
     additional_security
     setup_automatic_updates
