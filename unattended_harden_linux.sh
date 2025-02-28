@@ -321,11 +321,11 @@ setup_ntp() {
         systemctl start systemd-timesyncd.service || handle_error "Failed to start systemd-timesyncd service"
         log "systemd-timesyncd setup complete"
     else
-        # Fall back to traditional NTP if systemd-timesyncd is not available
-        log "Using traditional NTP for time synchronization"
-        install_package "ntp"
-        systemctl enable ntp || handle_error "Failed to enable NTP service"
-        systemctl start ntp || handle_error "Failed to start NTP service"
+        # Fall back to NTPsec if systemd-timesyncd is not available
+        log "Using NTPsec for time synchronization"
+        install_package "ntpsec"
+        systemctl enable ntpsec || handle_error "Failed to enable NTP service"
+        systemctl start ntpsec || handle_error "Failed to start NTP service"
         log "NTP setup complete"
     fi
 }
