@@ -433,7 +433,8 @@ additional_security() {
 setup_automatic_updates() {
     log "Setting up automatic security updates..."
     install_package "unattended-upgrades"
-    dpkg-reconfigure -plow unattended-upgrades || handle_error "Failed to configure unattended-upgrades"
+    echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | debconf-set-selections
+    dpkg-reconfigure -f noninteractive unattended-upgrades || handle_error "Failed to configure unattended-upgrades"
     log "Automatic security updates configured"
 }
 
@@ -465,10 +466,10 @@ main() {
     #disable_ipv6
     setup_ntp
     setup_aide
-    #setup_apparmor
     configure_sysctl
     additional_security
     setup_automatic_updates
+    setup_apparmor
     
     log "Enhanced Security Configuration executed! Script by captainzero93"
 
