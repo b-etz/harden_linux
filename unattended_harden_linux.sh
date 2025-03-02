@@ -87,7 +87,8 @@ setup_firewall() {
 setup_fail2ban() {
     log "Installing and Configuring Fail2Ban..."
     install_package "fail2ban"
-    cp $SOURCE_DIR/inc/jail.local /etc/fail2ban/jail.local || handle_error "Failed to create Fail2Ban local config"
+    cp $SOURCE_DIR/inc/jail.local /etc/fail2ban || handle_error "Failed to create Fail2Ban local config"
+    cp $SOURCE_DIR/inc/ufw-aggressive.conf /etc/fail2ban/filter.d || handle_error "Failed to create Fail2Ban ufw filter"
     systemctl enable fail2ban || handle_error "Failed to enable Fail2Ban service"
     systemctl start fail2ban || handle_error "Failed to start Fail2Ban service"
     log "Fail2Ban configured and started"
