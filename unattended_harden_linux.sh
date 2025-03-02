@@ -332,10 +332,11 @@ additional_security() {
     chmod 600 /etc/shadow || handle_error "Failed to set permissions on /etc/shadow"
     chmod 600 /etc/gshadow || handle_error "Failed to set permissions on /etc/gshadow"
     
-    # Restrict SSH
+    # Restrict SSH and Verbose Logging
     sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config || handle_error "Failed to disable root login via SSH"
     sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config || handle_error "Failed to disable password authentication for SSH"
     sed -i 's/^#Protocol.*/Protocol 2/' /etc/ssh/sshd_config || handle_error "Failed to set SSH protocol version"
+    sed -i 's/^#LogLevel.*/LogLevel VERBOSE/' /etc/ssh/sshd_config || handle_error "Failed to increase SSHD verbosity"
     systemctl restart sshd || handle_error "Failed to restart SSH service"
     
     log "Additional security measures applied"
