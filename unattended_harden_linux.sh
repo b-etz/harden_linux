@@ -11,6 +11,7 @@
 BACKUP_DIR="/root/security_backup_$(date +%Y%m%d_%H%M%S)"
 LOG_FILE="/var/log/unattended_hardening.log"
 SCRIPT_NAME=$(basename "$0")
+SOURCE_DIR=$(dirname "$BASH_SOURCE")
 
 # Function for logging
 log() {
@@ -86,9 +87,7 @@ setup_firewall() {
 setup_fail2ban() {
     log "Installing and Configuring Fail2Ban..."
     install_package "fail2ban"
-    cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local || handle_error "Failed to create Fail2Ban local config"
-    sed -i 's/bantime  = 10m/bantime  = 1h/' /etc/fail2ban/jail.local || handle_error "Failed to set Fail2Ban bantime"
-    sed -i 's/maxretry = 5/maxretry = 3/' /etc/fail2ban/jail.local || handle_error "Failed to set Fail2Ban maxretry"
+    cp $SOURCE_DIR/inc/jail.local /etc/fail2ban/jail.local || handle_error "Failed to create Fail2Ban local config"
     systemctl enable fail2ban || handle_error "Failed to enable Fail2Ban service"
     systemctl start fail2ban || handle_error "Failed to start Fail2Ban service"
     log "Fail2Ban configured and started"
