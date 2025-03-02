@@ -1,0 +1,93 @@
+# /etc/fail2ban/jail.local
+#
+# See jail.conf(5) man page for more information
+
+[INCLUDES]
+before = paths-debian.conf
+
+[DEFAULT]
+bantime.increment = true
+bantime = 1h
+bantime.rndtime = 15m
+bantime.factor = 1
+bantime.multipliers = 1 2 4 12 24 72 336 840
+
+findtime  = 2h
+maxretry = 5
+maxmatches = %(maxretry)s
+backend = auto
+usedns = warn
+logencoding = auto
+
+mode = normal
+filter = %(__name__)s[mode=%(mode)s]
+ignorecommand =
+port = 0:65535
+protocol = tcp
+chain = <known/chain>
+
+enabled = false
+
+# Action shortcuts. To be used to define action parameter
+banaction = iptables-multiport
+banaction_allports = iptables-allports
+action_ = %(banaction)s[port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"]
+action = %(action_)s
+
+
+[ufw]
+enabled   = true
+logpath   = /var/log/ufw.log
+filter    = ufw-aggressive
+banaction = iptables-allports[protocol=all, blocktype=DROP]
+bantime   = -1
+findtime  = 24h
+
+[sshd]
+enabled = true
+# To use more aggressive sshd modes set filter parameter "mode" in jail.local:
+# normal (default), ddos, extra or aggressive (combines all).
+# See "tests/files/logs/sshd" or "filter.d/sshd.conf" for usage example and details.
+mode    = aggressive
+port    = ssh
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
+banaction  = iptables-allports[protocol=all, blocktype=DROP]
+bantime    = -1
+findtime   = 24h
+
+# To use more aggressive http-auth modes set filter parameter "mode" in jail.local:
+# normal (default), aggressive (combines all), auth or fallback
+# See "tests/files/logs/nginx-http-auth" or "filter.d/nginx-http-auth.conf" for usage example and details.
+[nginx-http-auth]
+mode    = aggressive
+port    = http,https
+logpath = %(nginx_error_log)s
+
+# To use 'nginx-limit-req' jail you should have `ngx_http_limit_req_module` 
+# and define `limit_req` and `limit_req_zone` as described in nginx documentation
+# http://nginx.org/en/docs/http/ngx_http_limit_req_module.html
+# or for example see in 'config/filter.d/nginx-limit-req.conf'
+[nginx-limit-req]
+port    = http,https
+logpath = %(nginx_error_log)s
+
+[nginx-botsearch]
+port     = http,https
+logpath  = %(nginx_error_log)s
+
+[nginx-bad-request]
+port    = http,https
+logpath = %(nginx_access_log)s
+
+[squid]
+port     =  80,443,3128,8080
+logpath = /var/log/squid/access.log
+
+[gitlab]
+port    = http,https
+logpath = /var/log/gitlab/gitlab-rails/application.log
+
+[bitwarden]
+port    = http,https
+logpath = /home/*/bwdata/logs/identity/Identity/log.txt
