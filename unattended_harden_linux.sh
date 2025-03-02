@@ -6,8 +6,6 @@
 # WARNING: Check logs before assuming that everything executed fine.
 # Consider a trust review of third-party installed packages:
 # - Fail2Ban
-# - ClamAV / ClamAV-Daemon
-# - AppArmor / AppArmor-Utils
 # - AIDE
 
 # Global variables
@@ -131,18 +129,6 @@ setup_fail2ban() {
     systemctl enable fail2ban || handle_error "Failed to enable Fail2Ban service"
     systemctl start fail2ban || handle_error "Failed to start Fail2Ban service"
     log "Fail2Ban configured and started"
-}
-
-# Function to setup ClamAV
-setup_clamav() {
-    log "Installing and Updating ClamAV..."
-    install_package "clamav"
-    install_package "clamav-daemon"
-    systemctl stop clamav-freshclam || log "Warning: Failed to stop clamav-freshclam"
-    freshclam || log "Warning: ClamAV database update failed"
-    systemctl start clamav-freshclam || handle_error "Failed to start clamav-freshclam"
-    systemctl enable clamav-freshclam || handle_error "Failed to enable clamav-freshclam"
-    log "ClamAV installed and updated"
 }
 
 # Function to disable root login
@@ -289,25 +275,6 @@ disable_ipv6() {
     echo "net.ipv6.conf.lo.disable_ipv6 = 1" | tee -a /etc/sysctl.conf || handle_error "Failed to disable IPv6 (lo)"
     sysctl -p || handle_error "Failed to apply sysctl changes"
     log "IPv6 has been disabled"
-}
-
-# Function to setup AppArmor
-setup_apparmor() {
-    log "Setting up AppArmor..."
-    
-    if ! command -v apparmor_status &> /dev/null; then
-        install_package "apparmor"
-        install_package "apparmor-utils"
-    else
-        log "AppArmor is already installed. Skipping installation."
-    fi
-
-    systemctl enable apparmor || handle_error "Failed to enable AppArmor service"
-    systemctl start apparmor || handle_error "Failed to start AppArmor service"
-    aa-enforce /etc/apparmor.d/* || log "Warning: Failed to enforce some AppArmor profiles"
-
-    log "AppArmor setup complete. All profiles are in enforce mode."
-    log "Monitor /var/log/syslog and /var/log/auth.log for any AppArmor-related issues."
 }
 
 # Function to setup NTP
@@ -457,7 +424,6 @@ main() {
     update_system
     setup_firewall
     setup_fail2ban
-    setup_clamav
     disable_root
     remove_packages
     setup_audit
@@ -469,7 +435,6 @@ main() {
     configure_sysctl
     additional_security
     setup_automatic_updates
-    setup_apparmor
     
     log "Enhanced Security Configuration executed! Script by captainzero93"
 
