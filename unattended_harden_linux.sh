@@ -2,11 +2,10 @@
 
 # This version of the Linux hardening script has defaults in place and no user input.
 # This allows headless execution for servers.
-# This is intended to be run as root on first startup for a Vultr VPS.
+# This is intended to be run as root on first startup for a Vultr/Crunchbits VPS.
 # WARNING: Check logs before assuming that everything executed fine.
 # Consider a trust review of third-party installed packages:
 # - Fail2Ban
-# - AIDE
 
 # Global variables
 BACKUP_DIR="/root/security_backup_$(date +%Y%m%d_%H%M%S)"
@@ -60,12 +59,6 @@ check_permissions() {
         echo "This script must be run as root."
         exit 1
     fi
-}
-
-# Function to display help
-display_help() {
-    echo "Usage: # ./$SCRIPT_NAME"
-    exit 0
 }
 
 # Function to check system requirements
@@ -297,15 +290,6 @@ setup_ntp() {
     fi
 }
 
-# Function to setup AIDE
-setup_aide() {
-    log "Setting up AIDE..."
-    install_package "aide"
-    aideinit || handle_error "Failed to initialize AIDE database"
-    mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db || handle_error "Failed to move AIDE database"
-    log "AIDE setup complete"
-}
-
 # Function to configure sysctl
 configure_sysctl() {
     log "Configuring sysctl settings..."
@@ -378,20 +362,11 @@ additional_security() {
     chmod 600 /etc/shadow || handle_error "Failed to set permissions on /etc/shadow"
     chmod 600 /etc/gshadow || handle_error "Failed to set permissions on /etc/gshadow"
     
-    # Enable process accounting
-    install_package "acct"
-    /usr/sbin/accton on || handle_error "Failed to enable process accounting"
-    
     # Restrict SSH
     sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config || handle_error "Failed to disable root login via SSH"
     sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config || handle_error "Failed to disable password authentication for SSH"
     sed -i 's/^#Protocol.*/Protocol 2/' /etc/ssh/sshd_config || handle_error "Failed to set SSH protocol version"
     systemctl restart sshd || handle_error "Failed to restart SSH service"
-    
-    # Configure strong password policy
-    sed -i 's/PASS_MAX_DAYS\t99999/PASS_MAX_DAYS\t90/' /etc/login.defs || handle_error "Failed to set password max days"
-    sed -i 's/PASS_MIN_DAYS\t0/PASS_MIN_DAYS\t7/' /etc/login.defs || handle_error "Failed to set password min days"
-    sed -i 's/password.*pam_unix.so.*/password    [success=1 default=ignore]    pam_unix.so obscure sha512 minlen=14 remember=5/' /etc/pam.d/common-password || handle_error "Failed to configure password policy"
     
     log "Additional security measures applied"
 }
@@ -407,21 +382,11 @@ setup_automatic_updates() {
 
 # Main function
 main() {
-    # Parse command line arguments
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            *)
-                echo "Unknown option: $1"
-                display_help
-                ;;
-        esac
-    done
-
     check_permissions
     check_requirements
     backup_files
-
     update_system
+    
     setup_firewall
     setup_fail2ban
     disable_root
@@ -431,17 +396,14 @@ main() {
     secure_boot
     #disable_ipv6
     setup_ntp
-    setup_aide
     configure_sysctl
     additional_security
     setup_automatic_updates
     
     log "Enhanced Security Configuration executed! Script by captainzero93"
-
     log "Restarting system..."
     reboot
 }
 
 # Run the main function
 main "$@"
-
