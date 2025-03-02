@@ -70,12 +70,12 @@ setup_firewall() {
     ufw allow 80/tcp comment 'Allow HTTP' || handle_error "Failed to allow HTTP in UFW"
     ufw allow 443/tcp comment 'Allow HTTPS' || handle_error "Failed to allow HTTPS in UFW"
     
-    log "Applying IPv6-specific firewall rules..."
-    ufw allow in on lo || handle_error "Failed to allow loopback traffic"
-    ufw allow out on lo || handle_error "Failed to allow loopback traffic"
-    ufw deny in from ::/0 || handle_error "Failed to deny all incoming IPv6 traffic"
-    ufw allow out to ::/0 || handle_error "Failed to allow all outgoing IPv6 traffic"
-    log "IPv6 firewall rules applied"
+    #log "Applying IPv6-specific firewall rules..."
+    #ufw allow in on lo || handle_error "Failed to allow loopback traffic"
+    #ufw allow out on lo || handle_error "Failed to allow loopback traffic"
+    #ufw deny in from ::/0 || handle_error "Failed to deny all incoming IPv6 traffic"
+    #ufw allow out to ::/0 || handle_error "Failed to allow all outgoing IPv6 traffic"
+    #log "IPv6 firewall rules applied"
     
     ufw logging on || handle_error "Failed to enable UFW logging"
     ufw --force enable || handle_error "Failed to enable UFW"
