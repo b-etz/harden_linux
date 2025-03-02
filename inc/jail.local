@@ -40,7 +40,6 @@ enabled   = true
 logpath   = /var/log/ufw.log
 filter    = ufw-aggressive
 banaction = iptables-allports[protocol=all, blocktype=DROP]
-bantime   = -1
 findtime  = 24h
 
 [sshd]
@@ -53,7 +52,6 @@ port    = ssh
 logpath = %(sshd_log)s
 backend = %(sshd_backend)s
 banaction  = iptables-allports[protocol=all, blocktype=DROP]
-bantime    = -1
 findtime   = 24h
 
 # To use more aggressive http-auth modes set filter parameter "mode" in jail.local:
