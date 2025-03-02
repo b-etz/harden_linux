@@ -53,36 +53,6 @@ backup_files() {
     log "Backup created in $BACKUP_DIR"
 }
 
-# Function to check permissions
-check_permissions() {
-    if [ "$EUID" -ne 0 ]; then
-        echo "This script must be run as root."
-        exit 1
-    fi
-}
-
-# Function to check system requirements
-check_requirements() {
-    if ! command -v lsb_release &> /dev/null; then
-        handle_error "lsb_release command not found. This script requires an Ubuntu-based system."
-    fi
-
-    local os_name=$(lsb_release -si)
-    local os_version=$(lsb_release -sr)
-
-    if [[ "$os_name" != "Ubuntu" && "$os_name" != "Debian" ]]; then
-        handle_error "This script is designed for Ubuntu or Debian-based systems. Detected OS: $os_name"
-    fi
-
-    if [[ $(echo "$os_version < 18.04" | bc) -eq 1 ]]; then
-        handle_error "This script requires Ubuntu 18.04 or later. Detected version: $os_version"
-	elif [[ "$os_name" == "Debian" && $(echo "$os_version < 12.0" | bc) -eq 1 ]]; then
-	handle_error "This script requires Debian 12.0 or later. Detected version: $os_version"
-    fi
-
-    log "System requirements check passed. OS: $os_name $os_version"
-}
-
 # Function to update system
 update_system() {
     log "Updating System..."
@@ -382,8 +352,6 @@ setup_automatic_updates() {
 
 # Main function
 main() {
-    check_permissions
-    check_requirements
     backup_files
     update_system
     
