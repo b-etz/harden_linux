@@ -176,12 +176,7 @@ setup_audit() {
 # Function to disable unused filesystems
 disable_filesystems() {
     log "Disabling Unused Filesystems..."
-    local filesystems=("cramfs" "freevxfs" "jffs2" "hfs" "hfsplus" "squashfs" "udf" "vfat")
-    
-    for fs in "${filesystems[@]}"; do
-        echo "install $fs /bin/true" | tee -a /etc/modprobe.d/CIS.conf > /dev/null || handle_error "Failed to disable filesystem: $fs"
-    done
-    
+    cp $SOURCE_DIR/inc/fs-disable.conf /etc/modprobe.d || handle_error "Failed to create filesystem module blacklist"
     log "Unused filesystems disabled"
 }
 
