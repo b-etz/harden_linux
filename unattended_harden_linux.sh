@@ -263,8 +263,8 @@ setup_ntp() {
 # Function to configure sysctl
 configure_sysctl() {
     log "Configuring sysctl settings..."
-    cp $SOURCE_DIR/inc/10-harden_linux.conf /etc/sysctl.d || handle_error "Failed to create sysctl.d conf"
-    sysctl -p /etc/sysctl.d/10-harden_linux.conf || handle_error "Failed to apply sysctl changes"
+    cp $SOURCE_DIR/inc/local.conf /etc/sysctl.d || handle_error "Failed to create sysctl.d conf"
+    sysctl -p /etc/sysctl.d/local.conf || handle_error "Failed to apply sysctl changes"
     log "sysctl settings configured"
 }
 
