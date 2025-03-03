@@ -40,7 +40,6 @@ backup_files() {
         "/etc/ssh/sshd_config"
         "/etc/pam.d/common-password"
         "/etc/login.defs"
-        "/etc/sysctl.conf"
     )
     
     for file in "${files_to_backup[@]}"; do
@@ -70,12 +69,12 @@ setup_firewall() {
     ufw limit ssh comment 'Allow SSH with rate limiting' || handle_error "Failed to configure SSH in UFW"
     ufw allow 80/tcp comment 'Allow HTTP' || handle_error "Failed to allow HTTP in UFW"
     ufw allow 443/tcp comment 'Allow HTTPS' || handle_error "Failed to allow HTTPS in UFW"
-    #log "Applying IPv6-specific firewall rules..."
-    #ufw allow in on lo || handle_error "Failed to allow loopback traffic"
-    #ufw allow out on lo || handle_error "Failed to allow loopback traffic"
-    #ufw deny in from ::/0 || handle_error "Failed to deny all incoming IPv6 traffic"
-    #ufw allow out to ::/0 || handle_error "Failed to allow all outgoing IPv6 traffic"
-    #log "IPv6 firewall rules applied"
+    log "Applying IPv6-specific firewall rules..."
+    ufw allow in on lo || handle_error "Failed to allow loopback traffic"
+    ufw allow out on lo || handle_error "Failed to allow loopback traffic"
+    ufw deny in from ::/0 || handle_error "Failed to deny all incoming IPv6 traffic"
+    ufw allow out to ::/0 || handle_error "Failed to allow all outgoing IPv6 traffic"
+    log "IPv6 firewall rules applied"
 
     install_package "rsyslog"
     ufw logging on || handle_error "Failed to enable UFW logging"
@@ -97,11 +96,7 @@ setup_fail2ban() {
 # Function to disable root login
 disable_root() {
     log "Checking for non-root users with sudo privileges..."
-    
-    # Get the list of users with sudo privileges
     sudo_users=$(getent group sudo | cut -d: -f4 | tr ',' '\n' | grep -v "^root$")
-    
-    # Check if there are any non-root users with sudo privileges
     if [ -z "$sudo_users" ]; then
         log "Warning: No non-root users with sudo privileges found. Skipping root login disable for safety."
         echo "Please create a non-root user with sudo privileges before disabling root login."
@@ -109,13 +104,7 @@ disable_root() {
     fi
     
     log "Non-root users with sudo privileges found. Proceeding to disable root login..."
-    
-    # Disable root login
-    if passwd -l root; then
-        log "Root login disabled successfully."
-    else
-        handle_error "Failed to lock root account"
-    fi
+    passwd -l root || handle_error "Failed to lock root account"
     
     # Disable root SSH login as an additional precaution
     if grep -q "^PermitRootLogin" /etc/ssh/sshd_config; then
@@ -126,7 +115,6 @@ disable_root() {
     
     # Restart SSH service to apply changes
     systemctl restart sshd || handle_error "Failed to restart SSH service"
-    
     log "Root login has been disabled and SSH root login has been explicitly prohibited."
 }
 
@@ -142,32 +130,7 @@ remove_packages() {
 setup_audit() {
     log "Configuring audit rules..."
     install_package "auditd"
-    
-    local audit_rules=(
-        "-w /etc/passwd -p wa -k identity"
-        "-w /etc/group -p wa -k identity"
-        "-w /etc/shadow -p wa -k identity"
-        "-w /etc/sudoers -p wa -k sudoers"
-        "-w /var/log/auth.log -p wa -k auth_log"
-        "-w /sbin/insmod -p x -k modules"
-        "-w /sbin/rmmod -p x -k modules"
-        "-w /sbin/modprobe -p x -k modules"
-        "-w /var/log/faillog -p wa -k logins"
-        "-w /var/log/lastlog -p wa -k logins"
-        "-w /var/run/utmp -p wa -k session"
-        "-w /var/log/wtmp -p wa -k session"
-        "-w /var/log/btmp -p wa -k session"
-        "-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change"
-        "-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time-change"
-        "-a always,exit -F arch=b64 -S clock_settime -k time-change"
-        "-a always,exit -F arch=b32 -S clock_settime -k time-change"
-        "-w /etc/localtime -p wa -k time-change"
-    )
-    
-    for rule in "${audit_rules[@]}"; do
-        echo "$rule" | tee -a /etc/audit/rules.d/audit.rules > /dev/null || handle_error "Failed to add audit rule: $rule"
-    done
-    
+    cp -f $SOURCE_DIR/inc/audit.rules /etc/audit/rules.d/audit.rules || handle_error "Failed to copy custom audit rule deck"
     systemctl enable auditd || handle_error "Failed to enable auditd service"
     systemctl start auditd || handle_error "Failed to start auditd service"
     log "Audit rules configured and auditd started"
