@@ -264,6 +264,9 @@ setup_ntp() {
 configure_sysctl() {
     log "Configuring sysctl settings..."
     cp $SOURCE_DIR/inc/local.conf /etc/sysctl.d || handle_error "Failed to create sysctl.d conf"
+    if [ -f /etc/default/ufw ]; then
+        sed -i 's/^IPT_SYSCTL=.*/#IPT_SYSCTL=/' /etc/default/ufw || handle_error "Failed to disable UFW sysctl override"
+    fi
     sysctl -p /etc/sysctl.d/local.conf || handle_error "Failed to apply sysctl changes"
     log "sysctl settings configured"
 }
