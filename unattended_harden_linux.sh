@@ -67,8 +67,8 @@ setup_firewall() {
     ufw default deny incoming || handle_error "Failed to set UFW default incoming policy"
     ufw default allow outgoing || handle_error "Failed to set UFW default outgoing policy"
     ufw limit ssh comment 'Allow SSH with rate limiting' || handle_error "Failed to configure SSH in UFW"
-    ufw allow 80/tcp comment 'Allow HTTP' || handle_error "Failed to allow HTTP in UFW"
-    ufw allow 443/tcp comment 'Allow HTTPS' || handle_error "Failed to allow HTTPS in UFW"
+    # ufw allow 80/tcp comment 'Allow HTTP' || handle_error "Failed to allow HTTP in UFW"
+    # ufw allow 443/tcp comment 'Allow HTTPS' || handle_error "Failed to allow HTTPS in UFW"
     log "Applying IPv6-specific firewall rules..."
     ufw allow in on lo || handle_error "Failed to allow loopback traffic"
     ufw allow out on lo || handle_error "Failed to allow loopback traffic"
@@ -271,7 +271,7 @@ main() {
     setup_audit
     disable_filesystems
     secure_boot
-    #disable_ipv6
+    disable_ipv6
     setup_ntp
     configure_sysctl
     additional_security
