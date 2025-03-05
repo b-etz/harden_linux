@@ -21,7 +21,7 @@ logencoding = auto
 
 mode = normal
 filter = %(__name__)s[mode=%(mode)s]
-ignoreip = 127.0.0.1/8 ::1 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+ignoreip = 127.0.0.1/8
 ignorecommand =
 port = 0:65535
 protocol = tcp
