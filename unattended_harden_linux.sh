@@ -74,6 +74,7 @@ setup_firewall() {
     ufw allow out 80 comment 'Allow HTTP queries' || handle_error "Failed to allow HTTP queries in UFW"
     ufw allow out 123/udp comment 'Allow NTP sync' || handle_error "Failed to allow outgoing NTP in UFW"
     ufw allow out 443 comment 'Allow HTTPS queries' || handle_error "Failed to allow HTTPS queries in UFW"
+    ufw allow out 853 comment 'Allow DoT queries' || handle_error "Failed to allow DNS-over-TLS queries in UFW"
     log "Applying IPv6-specific firewall rules..."
     ufw allow in on lo || handle_error "Failed to allow loopback traffic"
     ufw allow out on lo || handle_error "Failed to allow loopback traffic"
