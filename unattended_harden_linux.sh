@@ -75,12 +75,8 @@ setup_firewall() {
     ufw allow out 123/udp comment 'Allow NTP sync' || handle_error "Failed to allow outgoing NTP in UFW"
     ufw allow out 443 comment 'Allow HTTPS queries' || handle_error "Failed to allow HTTPS queries in UFW"
     ufw allow out 853 comment 'Allow DoT queries' || handle_error "Failed to allow DNS-over-TLS queries in UFW"
-    log "Applying IPv6-specific firewall rules..."
     ufw allow in on lo || handle_error "Failed to allow loopback traffic"
     ufw allow out on lo || handle_error "Failed to allow loopback traffic"
-    ufw deny in from ::/0 || handle_error "Failed to deny all incoming IPv6 traffic"
-    ufw allow out to ::/0 || handle_error "Failed to allow all outgoing IPv6 traffic"
-    log "IPv6 firewall rules applied"
 
     install_package "rsyslog"
     ufw logging on || handle_error "Failed to enable UFW logging"
