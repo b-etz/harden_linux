@@ -34,14 +34,13 @@ install_package() {
 # Function to backup files
 backup_files() {
     mkdir -p "$BACKUP_DIR" || handle_error "Failed to create backup directory"
-    
+
     local files_to_backup=(
         "/etc/default/grub"
-        "/etc/ssh/sshd_config"
         "/etc/pam.d/common-password"
         "/etc/login.defs"
     )
-    
+
     for file in "${files_to_backup[@]}"; do
         if [ -f "$file" ]; then
             cp "$file" "$BACKUP_DIR/" || log "Warning: Failed to backup $file"
@@ -49,7 +48,7 @@ backup_files() {
             log "Warning: $file not found, skipping backup"
         fi
     done
-    
+
     log "Backup created in $BACKUP_DIR"
 }
 
@@ -104,17 +103,17 @@ disable_root() {
         echo "Please create a non-root user with sudo privileges before disabling root login."
         return
     fi
-    
+
     log "Non-root users with sudo privileges found. Proceeding to disable root login..."
     passwd -l root || handle_error "Failed to lock root account"
-    
+
     # Disable root SSH login as an additional precaution
     if grep -q "^PermitRootLogin" /etc/ssh/sshd_config; then
         sed -i 's/^PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config || handle_error "Failed to disable root SSH login in sshd_config"
     else
         echo "PermitRootLogin no" | tee -a /etc/ssh/sshd_config > /dev/null || handle_error "Failed to add PermitRootLogin no to sshd_config"
     fi
-    
+
     # Restart SSH service to apply changes
     systemctl restart sshd || handle_error "Failed to restart SSH service"
     log "Root login has been disabled and SSH root login has been explicitly prohibited."
@@ -148,7 +147,7 @@ disable_filesystems() {
 # Function to secure boot settings
 secure_boot() {
     log "Securing Boot Settings..."
-    
+
     # Secure GRUB configuration file
     if [ -f /boot/grub/grub.cfg ]; then
         chown root:root /boot/grub/grub.cfg || handle_error "Failed to change ownership of grub.cfg"
@@ -157,22 +156,22 @@ secure_boot() {
     else
         log "Warning: /boot/grub/grub.cfg not found. Skipping GRUB file permissions."
     fi
-    
+
     # Modify kernel parameters
     if [ -f /etc/default/grub ]; then
         # Backup original file
         cp /etc/default/grub /etc/default/grub.bak || handle_error "Failed to backup grub file"
-        
+
         # Add or modify kernel parameters
         local kernel_params="audit=1 net.ipv4.conf.all.rp_filter=1 net.ipv4.conf.all.accept_redirects=0 net.ipv4.conf.all.send_redirects=0"
-        
+
         # Consider disabling SACK
         #log "TCP SACK will be disabled"
         #kernel_params+=" net.ipv4.tcp_sack=0"
         log "TCP SACK will remain enabled"
-        
+
         sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"$kernel_params\"/" /etc/default/grub || handle_error "Failed to modify kernel parameters"
-        
+
         # Update GRUB
         if command -v update-grub &> /dev/null; then
             update-grub || handle_error "Failed to update GRUB"
@@ -181,12 +180,12 @@ secure_boot() {
         else
             log "Warning: Neither update-grub nor grub2-mkconfig found. Please update GRUB manually."
         fi
-        
+
         log "Kernel parameters updated"
     else
         log "Warning: /etc/default/grub not found. Skipping kernel parameter modifications."
     fi
-    
+
     log "Boot settings secured"
 }
 
@@ -203,7 +202,7 @@ disable_ipv6() {
 # Function to setup NTP
 setup_ntp() {
     log "Setting up time synchronization..."
-    
+
     # Check if systemd-timesyncd is available (modern Ubuntu systems)
     if systemctl list-unit-files | grep -q systemd-timesyncd.service; then
         log "Using systemd-timesyncd for time synchronization"
@@ -234,21 +233,18 @@ configure_sysctl() {
 # Function for additional security measures
 additional_security() {
     log "Applying additional security measures..."
-    
+
     # Disable core dumps
     echo "* hard core 0" | tee -a /etc/security/limits.conf || handle_error "Failed to disable core dumps"
-    
+
     # Set proper permissions on sensitive files
     chmod 600 /etc/shadow || handle_error "Failed to set permissions on /etc/shadow"
     chmod 600 /etc/gshadow || handle_error "Failed to set permissions on /etc/gshadow"
-    
-    # Restrict SSH and Verbose Logging
-    sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config || handle_error "Failed to disable root login via SSH"
-    sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config || handle_error "Failed to disable password authentication for SSH"
-    sed -i 's/^#Protocol.*/Protocol 2/' /etc/ssh/sshd_config || handle_error "Failed to set SSH protocol version"
-    sed -i 's/^#LogLevel.*/LogLevel VERBOSE/' /etc/ssh/sshd_config || handle_error "Failed to increase SSHD verbosity"
+
+    # Restrict SSH and enable verbose logging
+    cp -f $SOURCE_DIR/inc/10-hardened-ssh.conf /etc/ssh/sshd_config.d/10-hardened-ssh.conf || handle_error "Failed to copy sshd config file"
     systemctl restart sshd || handle_error "Failed to restart SSH service"
-    
+
     log "Additional security measures applied"
 }
 
@@ -265,7 +261,7 @@ setup_automatic_updates() {
 main() {
     backup_files
     update_system
-    
+
     setup_firewall
     setup_fail2ban
     disable_root
@@ -278,7 +274,7 @@ main() {
     configure_sysctl
     additional_security
     setup_automatic_updates
-    
+
     log "Enhanced Security Configuration executed! Script by captainzero93"
     log "Restarting system..."
     reboot
